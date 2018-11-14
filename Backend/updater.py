@@ -19,7 +19,7 @@ def update_hook(headers:dict, payload:dict, config:dict):
 
 def run_update(payload:dict, upstream:str, branch:str):
     webhook("Updater: push event registered.")
-    m = Popen("git fetch {} {}".format(upstream, branch), stdout=PIPE).communicate()[0] + "\n"
-    m += Popen("git pull {} {}".format(upstream, branch), stdout=PIPE).communicate()[0]
+    m = Popen(["git", "fetch", upstream, branch], stdout=PIPE).communicate()[0].decode() + "\n"
+    m += Popen(["git", "pull", upstream, branch], stdout=PIPE).communicate()[0].decode()
     webhook(m)
     print(m)
