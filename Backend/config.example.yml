@@ -8,3 +8,8 @@ database:
   host: HOST
 
 base-dir: BASE-DIR
+
+git:
+  upstream: UPSTREAM-REMOTE
+  branch: BRANCH
+  token: TOKEN
