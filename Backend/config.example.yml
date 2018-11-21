@@ -8,3 +8,6 @@ database:
   host: HOST
 
 base-dir: BASE-DIR
+
+bot:
+  token: TOKEN
