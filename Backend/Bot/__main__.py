@@ -1,48 +1,61 @@
-import os
 import sys
-import yaml
 
 import discord
 
+from .persist import load_config, Persistence
+from .util import get_general_channel
 
-def load_config() -> dict:
-    path = os.path.normpath(
-        os.path.join(
-            sys.argv[0], "..", "config.yml"
-        )
-    )
-    try:
-        with open(path, "r") as f:
-            try:
-                conf = yaml.safe_load(f.read())
-                try:
-                    return conf["bot"]
-                except:
-                    print("No bot configuration in the config file.")
-                    exit(1)
-            except:
-                print("Invalid config file.")
-                exit(1)
-    except:
-        print("No config file found.")
-        exit(1)
 
 config = load_config()
 try:
     token = config["token"]
-except:
+except KeyError:
     print("No token.")
     exit(1)
 
-client = discord.Client()
+try:
+    pers = Persistence(config["pers-file"])
+except KeyError:
+    print("No persistence file in config.")
+    exit(1)
+
+client = discord.Client(command_prefix="!")
 
 @client.event
 async def on_ready():
     print("Connected to server as {}.".format(client.user))
-    print("\n".join([str((i.id,i.name)) for i in client.get_all_channels()]))
-    await client.send_message(client.get_channel("514610632092418079"), "Hello! {} to save the day. I am the messenger of the... server!".format(client.user.name))
+    try:
+        greet = config["greeting"]
+        if "{}" in greet:
+            greet = greet.format(client.user.name)
+    except KeyError:
+        greet = "{} connected.".format(client.user.name)
+    except:
+        print("Malformed greeting string.")
+        return
+    await client.send_message(get_general_channel(client), greet)
 
+@client.event
+async def on_message(message):
+    print(message.author, message.content)
+
+# Testing REPL
+from threading import Thread
+def repl():
+    while True:
+        i = input("$ ")
+        if i == "exit":
+            break
+        else:
+            try:
+                print(eval(i))
+            except:
+                print(sys.exc_info())
+    client.close()
+
+# Main run
 try:
+    # Thread(target=repl).start()
     client.run(token)
 except discord.errors.LoginFailure:
     print("Login failure.")

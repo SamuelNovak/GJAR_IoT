@@ -11,3 +11,5 @@ base-dir: BASE-DIR
 
 bot:
   token: TOKEN
+  greeting: GREETING
+  pers-file: PERS-FILE
