@@ -1,4 +1,5 @@
 import time
+import re
 from collections.abc import Sequence
 from flaskext.mysql import MySQL
 
@@ -33,7 +34,7 @@ def insert_raw(table:str, values:str):
     """Insert values provided as a single string to table."""
     con = get_db()
     c = con.cursor()
-    c.execute("INSERT INTO {} VALUES ({});".format(table, values))
+    c.execute("INSERT INTO {} VALUES ({});".format(table, re.sub("((--)|(/\\*)|(\\*/)|(\\()|(\\))|;)", "", values)))
     con.commit()
 
 def select(table:str, col:str, where=None):

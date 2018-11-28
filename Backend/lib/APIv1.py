@@ -97,19 +97,35 @@ class api():
 
     def api_error(self, data):
         """API call for nodes to log errors."""
+        dev_id = data["id"]
+        level = data["level"]
+        try:
+            error = data["error"]
+        except:
+            error = "<No message.>"
         print("DEVICE has encountered an error. Printing data:")
         print(data)
+        db.insert_raw("logs", "'{}', {}, 'ERROR: Node {}:[{}]:{}'".format(db.format_time(), dev_id, dev_id, level, error))
         return jsonify(API_response(msg="I hear ya."))
 
     def api_alive(self, data):
         """API call for node heartbeat and commands."""
-        # TODO: Check the database to see if there are any pending command to be sent to the device.
-        return jsonify(API_response(command="PONG"))
+        rows = db.query("select commands.dev_id, command from commands join devices on commands.dev_id = devices.dev_id where devices.token = '{}';".format(data["token"]))
+        if rows:
+            dev_id = rows[0][0]
+            cmds = [r[1] for r in rows]
+            db.insert_raw("logs", "'{}', {}, 'Sending commands: {}'".format(db.format_time(), dev_id, "\n".join(cmds)))
+            return jsonify(API_response(command=cmds))
+        else:
+            return jsonify(API_response())
 
     def api_command(self, data):
         """API call for administration."""
-        if len(db.select("users", "*", "token='{}'".format(data["token"]))) == 1:
-            cmd = data["command"].split(" ")
+        token = data["token"]
+        command = data["command"]
+        db.insert_raw("logs", "'{}', null, 'Command invoked by [{}]: {}'".format(db.format_time(), token, command))
+        if len(db.select("users", "*", "token='{}'".format(token))) == 1:
+            cmd = command.split(" ")
             if not cmd:
                 return jsonify(API_fatal("No command supplied."))
             if cmd[0] == "candidates":
