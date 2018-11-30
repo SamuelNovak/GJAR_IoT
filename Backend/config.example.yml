@@ -13,3 +13,5 @@ bot:
   token: TOKEN
   greeting: GREETING
   pers-file: PERS-FILE
+  root: ROOT
+  command-prefix: COMMAND-PREFIX

@@ -26,7 +26,9 @@ def load_config() -> dict:
         print("No config file found.")
         exit(1)
 
+
 class Persistence():
+    """Only for flat structures!!!"""
     _path = "None"
     _data = {}
     def __init__(self, path):
@@ -44,7 +46,7 @@ class Persistence():
                     self._path = path + str(i)
                     print("Redirecting persistence to <{}>.".format(self._path))
             self._data = data
-
+    """
     def __getattr__(self, name:str):
         try:
             return self._data[name]
@@ -58,3 +60,23 @@ class Persistence():
         else:
             print("__setattr__(self, {}, {})".format(repr(name), repr(value)))
             self._data[name] = value
+    """
+    
+    def __getitem__(self, name:str):
+        try:
+            return self._data[name]
+        except KeyError:
+            self._data[name] = None
+            return None
+    
+    def __setitem__(self, name:str, value):
+        self._data[name] = value
+
+    def __del__(self):
+        print("Saving persistence to:", self._path)
+        try:
+            with open(self._path, "w") as f:
+                f.write(yaml.safe_dump(self._data))
+        except:
+            print("Failed. Error: {}\nDumping to output:".format(sys.exc_info()[1]))
+            print(self._data)

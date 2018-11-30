@@ -4,6 +4,7 @@ import discord
 
 from .persist import load_config, Persistence
 from .util import get_general_channel
+from .command import process_command
 
 
 config = load_config()
@@ -19,7 +20,18 @@ except KeyError:
     print("No persistence file in config.")
     exit(1)
 
-client = discord.Client(command_prefix="!")
+
+
+client = discord.Client()
+try:
+    prefix = config["command-prefix"]
+except KeyError:
+    prefix = "!"
+
+try:
+    pers["root"] = config["root"]
+except:
+    pass
 
 @client.event
 async def on_ready():
@@ -32,12 +44,17 @@ async def on_ready():
         greet = "{} connected.".format(client.user.name)
     except:
         print("Malformed greeting string.")
-        return
+        greet = "{} connected.".format(client.user.name)
     await client.send_message(get_general_channel(client), greet)
 
 @client.event
 async def on_message(message):
-    print(message.author, message.content)
+    if message.author != client.user:
+        print(message.author, message.author.id, message.content)
+        if message.content.startswith(prefix):
+            process_command(client, pers, message.content)
+
+
 
 # Testing REPL
 from threading import Thread
@@ -57,6 +74,8 @@ def repl():
 try:
     # Thread(target=repl).start()
     client.run(token)
+    del pers
 except discord.errors.LoginFailure:
     print("Login failure.")
+    del pers
     exit(2)
